@@ -48,12 +48,10 @@ fn main() {
 	let mut right_matrix = serialport::new("/dev/ttyACM0", 115200).open_native().expect("Can't open the given serial device!");
 	loop {
 		if let (Some(left_sleeping), Some(right_sleeping)) = get_sleep_statuses(&mut left_matrix, &mut right_matrix) {
-			if !left_sleeping {
+			if !left_sleeping && !right_sleeping {
 				sys.refresh_cpu_specifics(CpuRefreshKind::nothing().with_cpu_usage());
-				update_matrix(&mut left_matrix, sys.global_cpu_usage() as u8);
-			}
-			if !right_sleeping {
 				sys.refresh_memory_specifics(MemoryRefreshKind::nothing().with_ram());
+				update_matrix(&mut left_matrix, sys.global_cpu_usage() as u8);
 				update_matrix(&mut right_matrix, (sys.used_memory() as f64 / sys.total_memory() as f64 * 100.0) as u8);
 			}
 		}
