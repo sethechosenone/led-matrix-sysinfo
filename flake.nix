@@ -11,12 +11,7 @@
         inherit system;
         overlays = [ (import rust-overlay) ];
       };
-    in {
-      devShells.default = pkgs.mkShell {
-        nativeBuildInputs = with pkgs; [ pkg-config ];
-        buildInputs = with pkgs; [ systemd.dev rust-bin.nightly.latest.default cargo ];
-      };
-      packages.default = pkgs.rustPlatform.buildRustPackage {
+      appPackage = pkgs.rustPlatform.buildRustPackage {
         pname = "led-matrix-sysinfo";
         version = "1.0.0";
         src = ./.;
@@ -30,6 +25,20 @@
           platforms = platforms.linux;
         };
       };
+      nixosModule = import ./led-matrix-sysinfo.nix {
+          inherit pkgs;
+          lib = pkgs.lib;
+          config = {};
+          system = system;
+          appPackage = appPackage;  # pass the built package to the module
+        };
+    in {
+      devShells.default = pkgs.mkShell {
+        nativeBuildInputs = with pkgs; [ pkg-config ];
+        buildInputs = with pkgs; [ systemd.dev rust-bin.nightly.latest.default cargo ];
+      };
+      packages.default = appPackage;
+      nixosModules.default = nixosModule;
     }
   );
 }
