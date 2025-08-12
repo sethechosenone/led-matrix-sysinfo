@@ -13,7 +13,7 @@ fn get_sleep_status(dev: &mut TTYPort) -> Option<bool> {
 		Ok(val) if val > 0 => Some(response[0] != 0),
 		Ok(_) => None,
 		Err(e) => {
-			println!("Ran into problem reading from {}!: {}", &dev_path, e);
+			println!("Ran into problem while reading from {}!: {}", &dev_path, e);
 			None
 		}
 	}
@@ -35,7 +35,7 @@ fn get_sleep_statuses(dev1: &mut TTYPort, dev2: &mut TTYPort) -> (Option<bool>, 
 fn update_matrix(dev: &mut TTYPort, percent: u8) {
 	match dev.write(&[0x32, 0xAC, 0x01, 0x00, percent]) {
 		Ok(_) => (),
-		Err(e) => println!("Ran into error while writing to {}!: {}", dev.name().unwrap_or(String::new()), e)
+		Err(e) => println!("Ran into problem while writing to {}!: {}", dev.name().unwrap_or(String::new()), e)
 	}
 }
 
