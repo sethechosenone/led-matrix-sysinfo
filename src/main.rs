@@ -1,5 +1,3 @@
-#![feature(generic_const_exprs)]
-
 use std::{io::{Read, Write}, thread, time::Duration};
 use serialport::{SerialPort, TTYPort};
 use sysinfo::{CpuRefreshKind, MemoryRefreshKind, RefreshKind, System};
