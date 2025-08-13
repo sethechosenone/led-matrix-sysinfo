@@ -2,17 +2,27 @@ use std::{env, io::{Read, Write}, thread, time::Duration};
 use serialport::{SerialPort, TTYPort};
 use sysinfo::{CpuRefreshKind, MemoryRefreshKind, RefreshKind, System};
 
+fn panic_if_broken_pipe(e: &std::io::Error) {
+	if e.kind() == std::io::ErrorKind::BrokenPipe {
+		panic!("One of the LED matrices disconnected! Aborting...")
+	}
+}
+
 fn get_sleep_status(dev: &mut TTYPort) -> Option<bool> {
 	let dev_path = dev.name().unwrap_or(String::new());
 	match dev.write(&[0x32, 0xAC, 0x03]) {
 		Ok(_) => (),
-		Err(e) => println!("Can't get sleep status of {}!: {}", &dev_path, e)
+		Err(e) => {
+			panic_if_broken_pipe(&e);
+			println!("Can't get sleep status of {}!: {}", &dev_path, e)
+		}
 	};
 	let mut response = [0u8; 1];
 	match dev.read(&mut response) {
 		Ok(val) if val > 0 => Some(response[0] != 0),
 		Ok(_) => None,
 		Err(e) => {
+			panic_if_broken_pipe(&e);
 			println!("Ran into problem while reading from {}!: {}", &dev_path, e);
 			None
 		}
@@ -35,7 +45,10 @@ fn get_sleep_statuses(dev1: &mut TTYPort, dev2: &mut TTYPort) -> (Option<bool>, 
 fn update_matrix(dev: &mut TTYPort, percent: u8) {
 	match dev.write(&[0x32, 0xAC, 0x01, 0x00, percent]) {
 		Ok(_) => (),
-		Err(e) => println!("Ran into problem while writing to {}!: {}", dev.name().unwrap_or(String::new()), e)
+		Err(e) => {
+			panic_if_broken_pipe(&e);
+			println!("Ran into problem while writing to {}!: {}", dev.name().unwrap_or(String::new()), e)
+		}
 	}
 }
 
