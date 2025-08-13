@@ -1,44 +1,98 @@
 {
   description = "Simple application for displaying CPU/RAM usage on the Framework 16 LED Matrix modules";
+  
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
-    rust-overlay.url = "github:oxalica/rust-overlay";  
+    rust-overlay.url = "github:oxalica/rust-overlay";
     flake-utils.url = "github:numtide/flake-utils";
   };
+
   outputs = { self, nixpkgs, rust-overlay, flake-utils, ... }:
-    flake-utils.lib.eachDefaultSystem (system: let
-      pkgs = import nixpkgs {
-        inherit system;
-        overlays = [ (import rust-overlay) ];
-      };
-      appPackage = pkgs.rustPlatform.buildRustPackage {
-        pname = "led-matrix-sysinfo";
-        version = "1.0.0";
-        src = ./.;
-        cargoLock.lockFile = ./Cargo.lock;
-        nativeBuildInputs = with pkgs; [ pkg-config ];
-        buildInputs = with pkgs; [ systemd ];
-        meta = with pkgs.lib; {
-          description = "Simple test application for the Framework 16 LED Matrix modules";
-          license = licenses.mit;
-          maintainers = [];
-          platforms = platforms.linux;
+    flake-utils.lib.eachDefaultSystem (system:
+      let
+        pkgs = import nixpkgs {
+          inherit system;
+          overlays = [ (import rust-overlay) ];
         };
-      };
-      nixosModule = import ./led-matrix-sysinfo.nix {
-          inherit pkgs;
-          lib = pkgs.lib;
-          config = {};
-          system = system;
-          appPackage = appPackage;  # pass the built package to the module
+
+        led-matrix-sysinfo = pkgs.rustPlatform.buildRustPackage {
+          pname = "led-matrix-sysinfo";
+          version = "1.0.0";
+          src = ./.;
+          cargoLock.lockFile = ./Cargo.lock;
+          nativeBuildInputs = with pkgs; [ pkg-config ];
+          buildInputs = with pkgs; [ systemd ];
+          meta = with pkgs.lib; {
+            description = "Simple application for displaying CPU/RAM usage on the Framework 16 LED Matrix modules";
+            license = licenses.mit;
+            maintainers = [];
+            platforms = platforms.linux;
+          };
         };
-    in {
-      devShells.default = pkgs.mkShell {
-        nativeBuildInputs = with pkgs; [ pkg-config ];
-        buildInputs = with pkgs; [ systemd.dev rust-bin.nightly.latest.default cargo ];
+      in
+      {
+        packages = {
+          default = led-matrix-sysinfo;
+          led-matrix-sysinfo = led-matrix-sysinfo;
+        };
+
+        devShells.default = pkgs.mkShell {
+          nativeBuildInputs = with pkgs; [ pkg-config ];
+          buildInputs = with pkgs; [ systemd.dev rust-bin.nightly.latest.default cargo ];
+        };
+      }
+    ) // {
+      # NixOS modules defined inline
+      nixosModules = {
+        default = { config, lib, pkgs, ... }: {
+          imports = [ ];
+          
+          options = with lib; {
+            services.led-matrix-sysinfo = {
+              enable = mkEnableOption "LED Matrix System Info service";
+              
+              interval = mkOption {
+                type = types.int;
+                default = 1000;
+                description = "Update interval in milliseconds";
+              };
+            };
+          };
+
+          config = with lib; let
+            cfg = config.services.led-matrix-sysinfo;
+            
+            # Get the package for the current system
+            led-matrix-sysinfo = pkgs.rustPlatform.buildRustPackage {
+              pname = "led-matrix-sysinfo";
+              version = "1.0.0";
+              src = self;
+              cargoLock.lockFile = "${self}/Cargo.lock";
+              nativeBuildInputs = with pkgs; [ pkg-config ];
+              buildInputs = with pkgs; [ systemd ];
+              meta = with pkgs.lib; {
+                description = "Simple application for displaying CPU/RAM usage on the Framework 16 LED Matrix modules";
+                license = licenses.mit;
+                maintainers = [];
+                platforms = platforms.linux;
+              };
+            };
+          in mkIf cfg.enable {
+            systemd.services.led-matrix-sysinfo = {
+              description = "LED Matrix sysinfo service";
+              after = [ "network.target" ];
+              wantedBy = [ "multi-user.target" ];
+              serviceConfig = {
+                ExecStart = "${led-matrix-sysinfo}/bin/led-matrix-sysinfo";
+                Restart = "on-failure";
+                Type = "simple";
+              };
+            };
+          };
+        };
+
+        # Alias for convenience
+        led-matrix-sysinfo = self.nixosModules.default;
       };
-      packages.default = appPackage;
-      nixosModules.default = nixosModule;
-    }
-  );
+    };
 }
