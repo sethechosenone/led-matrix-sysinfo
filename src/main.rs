@@ -1,4 +1,4 @@
-use std::{io::{Read, Write}, thread, time::Duration};
+use std::{env, io::{Read, Write}, thread, time::Duration};
 use serialport::{SerialPort, TTYPort};
 use sysinfo::{CpuRefreshKind, MemoryRefreshKind, RefreshKind, System};
 
@@ -40,6 +40,12 @@ fn update_matrix(dev: &mut TTYPort, percent: u8) {
 }
 
 fn main() {
+	let args: Vec<String> = env::args().collect();
+	let interval_ms = if args.len() > 1 {
+        args[1].parse::<u64>().unwrap_or(1000)
+    } else {
+        1000
+    };
 	let mut sys = System::new_with_specifics(RefreshKind::nothing()
 		.with_cpu(CpuRefreshKind::nothing().with_cpu_usage())
 		.with_memory(MemoryRefreshKind::nothing().with_ram())
@@ -55,6 +61,6 @@ fn main() {
 				update_matrix(&mut right_matrix, (sys.used_memory() as f64 / sys.total_memory() as f64 * 100.0) as u8);
 			}
 		}
-		thread::sleep(Duration::from_secs(1));
+		thread::sleep(Duration::from_millis(interval_ms));
 	}
 }

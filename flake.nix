@@ -42,7 +42,6 @@
         };
       }
     ) // {
-      # NixOS modules defined inline
       nixosModules = {
         default = { config, lib, pkgs, ... }: {
           imports = [ ];
@@ -62,7 +61,6 @@
           config = with lib; let
             cfg = config.services.led-matrix-sysinfo;
             
-            # Get the package for the current system
             led-matrix-sysinfo = pkgs.rustPlatform.buildRustPackage {
               pname = "led-matrix-sysinfo";
               version = "1.0.0";
@@ -83,7 +81,7 @@
               after = [ "network.target" ];
               wantedBy = [ "multi-user.target" ];
               serviceConfig = {
-                ExecStart = "${led-matrix-sysinfo}/bin/led-matrix-sysinfo";
+                ExecStart = "${led-matrix-sysinfo}/bin/led-matrix-sysinfo ${toString cfg.interval}";
                 Restart = "on-failure";
                 Type = "simple";
               };
@@ -91,7 +89,6 @@
           };
         };
 
-        # Alias for convenience
         led-matrix-sysinfo = self.nixosModules.default;
       };
     };
