@@ -2,7 +2,7 @@
   description = "Simple application for displaying CPU/RAM usage on the Framework 16 LED Matrix modules";
   
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
+    nixpkgs.url = "github:nixos/nixpkgs";
     rust-overlay = {
       url = "github:oxalica/rust-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
