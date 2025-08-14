@@ -86,6 +86,7 @@
               serviceConfig = {
                 ExecStart = "${led-matrix-sysinfo}/bin/led-matrix-sysinfo ${toString cfg.interval}";
                 Restart = "on-failure";
+                RestartSec = 30;
                 Type = "simple";
               };
             };
