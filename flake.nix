@@ -52,11 +52,15 @@
           options = with lib; {
             services.led-matrix-sysinfo = {
               enable = mkEnableOption "LED Matrix System Info service";
-              
               interval = mkOption {
                 type = types.int;
                 default = 1000;
                 description = "Update interval in milliseconds";
+              };
+              timeBeforeRestart = mkOption {
+                type = types.int;
+                default = 5;
+                description = "Time in seconds to wait until restarting upon crash";
               };
             };
           };
@@ -86,7 +90,7 @@
               serviceConfig = {
                 ExecStart = "${led-matrix-sysinfo}/bin/led-matrix-sysinfo ${toString cfg.interval}";
                 Restart = "on-failure";
-                RestartSec = 30;
+                RestartSec = cfg.timeBeforeRestart;
                 Type = "simple";
               };
             };
