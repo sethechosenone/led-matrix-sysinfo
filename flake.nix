@@ -10,21 +10,34 @@
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, rust-overlay, flake-utils, ... }:
+  outputs = { self, nixpkgs, flake-utils, rust-overlay, ... }:
     flake-utils.lib.eachDefaultSystem (system:
       let
+        overlays = [ (import rust-overlay) ];
         pkgs = import nixpkgs {
-          inherit system;
-          overlays = [ (import rust-overlay) ];
+          inherit system overlays;
         };
 
-        led-matrix-sysinfo = pkgs.rustPlatform.buildRustPackage {
+        led-matrix-sysinfo = pkgs.stdenv.mkDerivation {
           pname = "led-matrix-sysinfo";
           version = "1.0.0";
-          src = ./.;
-          cargoLock.lockFile = ./Cargo.lock;
-          nativeBuildInputs = with pkgs; [ pkg-config ];
-          buildInputs = with pkgs; [ systemd ];
+
+          src = pkgs.fetchurl {
+            url = "https://github.com/sethechosenone/led-matrix-sysinfo/releases/latest/download/led-matrix-sysinfo";
+            sha256 = "sha256-IvKdA39M/Jes0FWmA7XR7vG8qL/GMVRHtM2gxuzBnLo=";
+          };
+
+          dontUnpack = true;
+
+          nativeBuildInputs = [ pkgs.autoPatchelfHook ];
+          buildInputs = [ pkgs.systemd ];
+
+          installPhase = ''
+            mkdir -p $out/bin
+            cp $src $out/bin/led-matrix-sysinfo
+            chmod +x $out/bin/led-matrix-sysinfo
+          '';
+
           meta = with pkgs.lib; {
             description = "Simple application for displaying CPU/RAM usage on the Framework 16 LED Matrix modules";
             license = licenses.mit;
@@ -41,7 +54,7 @@
 
         devShells.default = pkgs.mkShell {
           nativeBuildInputs = with pkgs; [ pkg-config ];
-          buildInputs = with pkgs; [ systemd.dev rust-bin.nightly.latest.default cargo ];
+          buildInputs = with pkgs; [ systemd.dev rust-bin.nightly.latest.default cargo rustfmt rust-analyzer ];
         };
       }
     ) // {
@@ -68,13 +81,26 @@
           config = with lib; let
             cfg = config.services.led-matrix-sysinfo;
             
-            led-matrix-sysinfo = pkgs.rustPlatform.buildRustPackage {
+            led-matrix-sysinfo = pkgs.stdenv.mkDerivation {
               pname = "led-matrix-sysinfo";
               version = "1.0.0";
-              src = self;
-              cargoLock.lockFile = "${self}/Cargo.lock";
-              nativeBuildInputs = with pkgs; [ pkg-config ];
-              buildInputs = with pkgs; [ systemd ];
+
+              src = pkgs.fetchurl {
+                url = "https://github.com/sethechosenone/led-matrix-sysinfo/releases/latest/download/led-matrix-sysinfo";
+                sha256 = "sha256-IvKdA39M/Jes0FWmA7XR7vG8qL/GMVRHtM2gxuzBnLo=";
+              };
+
+              dontUnpack = true;
+
+              nativeBuildInputs = [ pkgs.autoPatchelfHook ];
+              buildInputs = [ pkgs.systemd ];
+
+              installPhase = ''
+                mkdir -p $out/bin
+                cp $src $out/bin/led-matrix-sysinfo
+                chmod +x $out/bin/led-matrix-sysinfo
+              '';
+
               meta = with pkgs.lib; {
                 description = "Simple application for displaying CPU/RAM usage on the Framework 16 LED Matrix modules";
                 license = licenses.mit;
