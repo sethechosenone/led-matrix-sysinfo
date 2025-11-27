@@ -63,8 +63,13 @@ fn main() {
 		.with_cpu(CpuRefreshKind::nothing().with_cpu_usage())
 		.with_memory(MemoryRefreshKind::nothing().with_ram())
 	);
-	let mut left_matrix = serialport::new("/dev/ttyACM1", 115200).open_native().expect("Can't open the given serial device!");
-	let mut right_matrix = serialport::new("/dev/ttyACM0", 115200).open_native().expect("Can't open the given serial device!");
+	let available_ttyports = serialport::available_ports().expect("Can't get list of serial ports for some reason")
+		.into_iter().filter(|port| port.port_name.starts_with("/dev/ttyACM")).collect::<Vec<_>>();
+	if available_ttyports.is_empty() {
+		panic!("No ttyACM ports found! Are the LED matrix modules attached?");
+	}
+	let mut left_matrix = serialport::new(&available_ttyports.get(1).expect("Failed to start left LED matrix module!").port_name, 115200).open_native().unwrap();
+	let mut right_matrix = serialport::new(&available_ttyports.get(0).expect("Failed to start right LED matrix module!").port_name, 115200).open_native().unwrap();
 	loop {
 		if let (Some(left_sleeping), Some(right_sleeping)) = get_sleep_statuses(&mut left_matrix, &mut right_matrix) {
 			if !left_sleeping && !right_sleeping {
