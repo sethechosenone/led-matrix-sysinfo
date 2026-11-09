@@ -20,11 +20,11 @@
 
         led-matrix-sysinfo = pkgs.stdenv.mkDerivation {
           pname = "led-matrix-sysinfo";
-          version = "1.0.0";
+          version = "1.1.0";
 
           src = pkgs.fetchurl {
             url = "https://github.com/sethechosenone/led-matrix-sysinfo/releases/latest/download/led-matrix-sysinfo";
-            sha256 = "sha256-IvKdA39M/Jes0FWmA7XR7vG8qL/GMVRHtM2gxuzBnLo=";
+            sha256 = "sha256-rKysJHlU9iyu+tZQoaD+fYepidMUz72xJV7pN8fH/EE=";
           };
 
           dontUnpack = true;
@@ -83,11 +83,11 @@
             
             led-matrix-sysinfo = pkgs.stdenv.mkDerivation {
               pname = "led-matrix-sysinfo";
-              version = "1.0.0";
+              version = "1.1.0";
 
               src = pkgs.fetchurl {
                 url = "https://github.com/sethechosenone/led-matrix-sysinfo/releases/latest/download/led-matrix-sysinfo";
-                sha256 = "sha256-IvKdA39M/Jes0FWmA7XR7vG8qL/GMVRHtM2gxuzBnLo=";
+                sha256 = "sha256-rKysJHlU9iyu+tZQoaD+fYepidMUz72xJV7pN8fH/EE=";
               };
 
               dontUnpack = true;
