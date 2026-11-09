@@ -93,7 +93,7 @@
               dontUnpack = true;
 
               nativeBuildInputs = [ pkgs.autoPatchelfHook ];
-              buildInputs = [ pkgs.systemd ];
+              buildInputs = with pkgs; [ systemd stdenv.cc.cc.lib ];
 
               installPhase = ''
                 mkdir -p $out/bin
